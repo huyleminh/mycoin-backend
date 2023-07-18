@@ -1,18 +1,22 @@
 import compression from "compression";
 import cors from "cors";
 import express from "express";
+import { createServer } from "http";
 import morgan from "morgan";
 import { env } from "process";
-import { AccessLogStream, Logger } from "./common/utils";
 import { errorHandlerMiddleware } from "./common/middlewares";
+import { AccessLogStream, Logger } from "./common/utils";
+import { AppControllers } from "./routes";
+import { bootstrapSocketServer } from "./socket";
+import { APP_CONFIG } from "./infrastructure/configs";
 
 env.TZ = "Asia/Ho_Chi_Minh";
 
-const PORT = 5000;
+const PORT = APP_CONFIG.appPort;
+const app = express();
+const httpServer = createServer(app);
 
 async function bootstrap() {
-    const app = express();
-
     app.use(compression());
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
@@ -36,18 +40,24 @@ async function bootstrap() {
     // disable get favicon with 404 error
     app.get("/favicon.ico", (_req, res) => res.status(204).end());
 
+    // handle API route here
+    AppControllers.forEach((controller) => app.use(controller.path, controller.handler));
+
     // 404
     app.use(function (_req, res, _next) {
-        res.sendStatus(404);
+        res.status(404).json({ code: 404, message: "Not Found" });
     });
 
     // error
     app.use(errorHandlerMiddleware);
 
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
         Logger.info(`Server is listening on port:${PORT}`);
     });
 }
 
 // Run http server
 bootstrap();
+
+// Run socket server
+bootstrapSocketServer();

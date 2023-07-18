@@ -18,3 +18,7 @@ export const CORS_CONFIG = {
     origin: process.env.ORIGIN || "*",
     credential: Boolean(process.env.CREDENTIAL).valueOf() || false,
 } as const;
+
+export const SOCKET_CONFIG = {
+    port: process.env.SOCKET_PORT ? +process.env.SOCKET_PORT : 5001,
+};
