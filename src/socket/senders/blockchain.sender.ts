@@ -1,5 +1,6 @@
 import { WebSocket } from "ws";
-import { Block, Blockchain } from "../../blockchain";
+import { Block } from "../../blockchain/block";
+import { Blockchain } from "../../blockchain/blockchain";
 import { SocketMessage } from "../../core/types";
 import { SOCKET_EVENT_NAME } from "../common/constants";
 import { SocketWriter } from "../common/utils";

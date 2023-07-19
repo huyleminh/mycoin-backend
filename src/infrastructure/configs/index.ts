@@ -12,6 +12,8 @@ export const APP_CONFIG = {
     rsa: {
         publicKey: process.env.RSA_PUBLIC_KEY,
     },
+
+    minerKeyLocation: process.env.PRIVATE_KEY_LOCATION || "keys/private_key",
 } as const;
 
 export const CORS_CONFIG = {

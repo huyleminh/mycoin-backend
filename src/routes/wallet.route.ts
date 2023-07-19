@@ -4,4 +4,6 @@ import { WalletController } from "../controllers";
 
 export const router = Router();
 
-router.get("/", asyncRouteHandler(WalletController.getWalletAddress));
+router.get("/me", asyncRouteHandler(WalletController.getMyWalletAddress));
+
+router.get("/:address/balance", asyncRouteHandler(WalletController.getUserbalance))

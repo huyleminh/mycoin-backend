@@ -2,17 +2,19 @@ import _ from "lodash";
 import { Transaction, validateTransaction } from "./transaction";
 import { TransactionInput } from "./transaction-input";
 import { UnspentTxOutput } from "./transaction-output";
+import { Logger } from "../../common/utils";
 
 export class TransactionPool {
     public pool: Transaction[];
 
-    static instance: TransactionPool;
+    private static _instance: TransactionPool;
 
     private constructor() {
         this.pool = [];
     }
 
-    addTransaction(tx: Transaction, unspentOutputs: UnspentTxOutput[]) {
+    // TODO: review exception
+    addTransaction(tx: Transaction, unspentOutputs: UnspentTxOutput[]): boolean {
         if (!validateTransaction(tx, unspentOutputs)) {
             throw Error("Trying to add invalid tx to pool");
         }
@@ -21,8 +23,8 @@ export class TransactionPool {
             throw Error("Trying to add invalid tx to pool");
         }
 
-        console.log("adding to txPool: %s", JSON.stringify(tx));
         this.pool.push(tx);
+        return true;
     }
 
     isTransactionValid(transaction: Transaction): boolean {
@@ -36,7 +38,6 @@ export class TransactionPool {
             });
 
             if (isContained) {
-                console.log("txIn already found in the txPool");
                 return false;
             }
         }
@@ -65,16 +66,20 @@ export class TransactionPool {
             }
         }
         if (invalidTxs.length > 0) {
-            console.log("removing the following transactions from txPool: %s", JSON.stringify(invalidTxs));
+            Logger.debug(
+                "Update transaction pool: removing the following transactions from txPool: %s",
+                JSON.stringify(invalidTxs),
+            );
+
             this.pool = _.without(this.pool, ...invalidTxs);
         }
     }
 
     static getInstance(): TransactionPool {
-        if (!TransactionPool.instance) {
-            TransactionPool.instance = new TransactionPool();
+        if (!TransactionPool._instance) {
+            TransactionPool._instance = new TransactionPool();
         }
 
-        return _.cloneDeep(TransactionPool.instance);
+        return TransactionPool._instance;
     }
 }

@@ -1,9 +1,17 @@
 import { Request, Response } from "express";
-import { WalletKeyAgent } from "../common/utils";
 import { DataResponse } from "../core/response";
+import { getBalance, getPublicKey } from "../wallet";
+import { getUnspentTxOuts } from "../blockchain/blockchain";
 
-export function getWalletAddress(_req: Request, res: Response) {
-    const r = new WalletKeyAgent().generateKeyPair();
+export function getMyWalletAddress(_req: Request, res: Response) {
+    const address = getPublicKey();
+    res.json(new DataResponse({ address }));
+}
 
-    res.json(new DataResponse(r));
+export function getUserbalance(req: Request, res: Response) {
+    const { address } = req.params;
+
+    const balance = getBalance(address, getUnspentTxOuts());
+
+    res.json(new DataResponse({ balance }));
 }

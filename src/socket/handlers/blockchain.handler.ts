@@ -1,4 +1,5 @@
-import { Block, Blockchain } from "../../blockchain";
+import { Block } from "../../blockchain/block";
+import { Blockchain } from "../../blockchain/blockchain";
 import { Logger } from "../../common/utils";
 import { SocketMessage } from "../../core/types/socket";
 import { SOCKET_EVENT_NAME } from "../common/constants";

@@ -3,6 +3,7 @@ import * as ecdsa from "elliptic";
 import _ from "lodash";
 import { TransactionInput } from "./transaction-input";
 import { TransactionOutput, UnspentTxOutput, findUnspentTxOutput } from "./transaction-output";
+import { Logger } from "../../common/utils";
 
 const ec = new ecdsa.ec("secp256k1");
 
@@ -33,12 +34,12 @@ export class Transaction {
 
     static isStructureValid(transaction: Transaction): boolean {
         if (typeof transaction.id !== "string") {
-            console.log("transactionId missing");
+            Logger.debug("Check transaction structure: transactionId missing");
             return false;
         }
 
         if (!(transaction.txInputList instanceof Array)) {
-            console.log("invalid txIns type in transaction");
+            Logger.debug("Check transaction structure: invalid txIns type in transaction");
             return false;
         }
         if (!transaction.txInputList.map(TransactionInput.isStructureValid).reduce((a, b) => a && b, true)) {
@@ -46,18 +47,19 @@ export class Transaction {
         }
 
         if (!(transaction.txOutputList instanceof Array)) {
-            console.log("invalid txIns type in transaction");
+            Logger.debug("Check transaction structure: invalid txIns type in transaction");
             return false;
         }
 
         if (!transaction.txOutputList.map(TransactionOutput.isValidTxOutStructure).reduce((a, b) => a && b, true)) {
             return false;
         }
+
         return true;
     }
 }
 
-export const validateTransaction = (transaction: Transaction, aUnspentTxOuts: UnspentTxOutput[]): boolean => {
+export function validateTransaction(transaction: Transaction, aUnspentTxOuts: UnspentTxOutput[]): boolean {
     if (!Transaction.isStructureValid(transaction)) {
         return false;
     }
@@ -90,7 +92,7 @@ export const validateTransaction = (transaction: Transaction, aUnspentTxOuts: Un
     }
 
     return true;
-};
+}
 
 const validateBlockTransactions = (
     aTransactions: Transaction[],

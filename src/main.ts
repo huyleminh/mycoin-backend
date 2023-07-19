@@ -6,9 +6,10 @@ import morgan from "morgan";
 import { env } from "process";
 import { errorHandlerMiddleware } from "./common/middlewares";
 import { AccessLogStream, Logger } from "./common/utils";
+import { APP_CONFIG } from "./infrastructure/configs";
 import { AppControllers } from "./routes";
 import { bootstrapSocketServer } from "./socket";
-import { APP_CONFIG } from "./infrastructure/configs";
+import { initMinerWallet } from "./wallet";
 
 env.TZ = "Asia/Ho_Chi_Minh";
 
@@ -61,3 +62,6 @@ bootstrap();
 
 // Run socket server
 bootstrapSocketServer();
+
+// Init wallet
+initMinerWallet();

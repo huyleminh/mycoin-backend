@@ -1,14 +1,19 @@
 import { Request, Response } from "express";
 import _ from "lodash";
-import { getUnspentTxOuts } from "../blockchain";
+import { getUnspentTxOuts } from "../blockchain/blockchain";
 import { BadRequestException } from "../common/exceptions";
 import { WalletKeyAgent } from "../common/utils";
-import { CreatedResponse } from "../core/response";
+import { CreatedResponse, DataResponse } from "../core/response";
 import { TransactionSocketSender } from "../socket/senders";
-import { Transaction } from "../transaction/transaction";
-import { TransactionInput } from "../transaction/transaction-input";
-import { TransactionOutput, UnspentTxOutput } from "../transaction/transaction-output";
-import { TransactionPool } from "../transaction/transaction-pool";
+import { Transaction } from "../blockchain/transaction/transaction";
+import { TransactionInput } from "../blockchain/transaction/transaction-input";
+import { TransactionOutput, UnspentTxOutput } from "../blockchain/transaction/transaction-output";
+import { TransactionPool } from "../blockchain/transaction/transaction-pool";
+import { getPrivateKey } from "../wallet";
+
+export function getTransactionPool(_req: Request, res: Response) {
+    res.json(new DataResponse(TransactionPool.getInstance().pool));
+}
 
 export function createTransaction(req: Request, res: Response) {
     const { body } = req;
@@ -25,13 +30,16 @@ export function createTransaction(req: Request, res: Response) {
 
     const poolInst = TransactionPool.getInstance();
     // test server key
-    const privateKey = "b7040e53c99ab89bf759900846bace120f8a582b7f3e74f7766b696edf6a4ecb";
+    // TODO: replace by client key
+    const privateKey = getPrivateKey();
     // create
     const transaction = createTx(address, actualAmount, privateKey, getUnspentTxOuts(), poolInst.pool);
     // add pool
     poolInst.addTransaction(transaction, getUnspentTxOuts());
     // broadcast
     TransactionSocketSender.broadcastTransactionPoolRepsonse();
+
+    console.log({ newPool: JSON.stringify(poolInst.pool) });
 
     res.json(new CreatedResponse(transaction));
 }
@@ -81,10 +89,10 @@ const createTxOuts = (receiverAddress: string, myAddress: string, amount: number
     const txOut1: TransactionOutput = new TransactionOutput(receiverAddress, amount);
     if (leftOverAmount === 0) {
         return [txOut1];
-    } else {
-        const leftOverTx = new TransactionOutput(myAddress, leftOverAmount);
-        return [txOut1, leftOverTx];
     }
+
+    const leftOverTx = new TransactionOutput(myAddress, leftOverAmount);
+    return [txOut1, leftOverTx];
 };
 
 const filterTxPoolTxs = (unspentTxOuts: UnspentTxOutput[], transactionPool: Transaction[]): UnspentTxOutput[] => {

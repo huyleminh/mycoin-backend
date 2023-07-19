@@ -38,3 +38,6 @@ lerna-debug.log*
 .env.production
 
 .npmrc
+
+keys/*
+!keys/.gitkeep

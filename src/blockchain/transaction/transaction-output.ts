@@ -1,4 +1,4 @@
-import { WalletKeyAgent } from "../common/utils";
+import { WalletKeyAgent } from "../../common/utils";
 
 export class UnspentTxOutput {
     constructor(
@@ -37,10 +37,10 @@ export class TransactionOutput {
     }
 }
 
-export const findUnspentTxOutput = (
-    transactionId: string,
+export function findUnspentTxOutput(
+    txOutputId: string,
     index: number,
     aUnspentTxOuts: UnspentTxOutput[],
-): UnspentTxOutput | null => {
-    return aUnspentTxOuts.find((uTxO) => uTxO.txOutputId === transactionId && uTxO.txOutputIndex === index) || null;
-};
+): UnspentTxOutput | null {
+    return aUnspentTxOuts.find((uTxO) => uTxO.txOutputId === txOutputId && uTxO.txOutputIndex === index) || null;
+}

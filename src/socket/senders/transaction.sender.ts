@@ -1,7 +1,7 @@
 import { WebSocket } from "ws";
 import { SocketMessage } from "../../core/types";
-import { Transaction } from "../../transaction/transaction";
-import { TransactionPool } from "../../transaction/transaction-pool";
+import { Transaction } from "../../blockchain/transaction/transaction";
+import { TransactionPool } from "../../blockchain/transaction/transaction-pool";
 import { SOCKET_EVENT_NAME } from "../common/constants";
 import { SocketWriter } from "../common/utils";
 import { getAllSocket } from "../server";
