@@ -50,23 +50,26 @@ function initMessageHandler(ws: WebSocket) {
                 // case MessageType.QUERY_TRANSACTION_POOL:
                 //     write(ws, responseTransactionPoolMsg());
                 //     break;
-                // case MessageType.RESPONSE_TRANSACTION_POOL:
-                //     const receivedTransactions: Transaction[] = JSONToObject<Transaction[]>(message.data);
-                //     if (receivedTransactions === null) {
-                //         console.log("invalid transaction received: %s", JSON.stringify(message.data));
-                //         break;
-                //     }
-                //     receivedTransactions.forEach((transaction: Transaction) => {
-                //         try {
-                //             handleReceivedTransaction(transaction);
-                //             // if no error is thrown, transaction was indeed added to the pool
-                //             // let's broadcast transaction pool
-                //             broadCastTransactionPool();
-                //         } catch (e) {
-                //             console.log(e.message);
-                //         }
-                //     });
-                //     break;
+                case SOCKET_EVENT_NAME.transactionPoolResponse:
+                    console.log("Recevied");
+                    console.log(message.data);
+
+                    //     const receivedTransactions: Transaction[] = JSONToObject<Transaction[]>(message.data);
+                    //     if (receivedTransactions === null) {
+                    //         console.log("invalid transaction received: %s", JSON.stringify(message.data));
+                    //         break;
+                    //     }
+                    //     receivedTransactions.forEach((transaction: Transaction) => {
+                    //         try {
+                    //             handleReceivedTransaction(transaction);
+                    //             // if no error is thrown, transaction was indeed added to the pool
+                    //             // let's broadcast transaction pool
+                    //             broadCastTransactionPool();
+                    //         } catch (e) {
+                    //             console.log(e.message);
+                    //         }
+                    //     });
+                    break;
             }
         } catch (e) {
             console.log(e);
