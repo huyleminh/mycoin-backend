@@ -1,14 +1,14 @@
 import { Request, Response } from "express";
 import _ from "lodash";
+import { getUnspentTxOuts } from "../blockchain";
 import { BadRequestException } from "../common/exceptions";
 import { WalletKeyAgent } from "../common/utils";
 import { CreatedResponse } from "../core/response";
-import { TransactionOutput, UnspentTxOutput } from "../transaction/transaction-output";
+import { TransactionSocketSender } from "../socket/senders";
 import { Transaction } from "../transaction/transaction";
 import { TransactionInput } from "../transaction/transaction-input";
+import { TransactionOutput, UnspentTxOutput } from "../transaction/transaction-output";
 import { TransactionPool } from "../transaction/transaction-pool";
-import { TransactionSocketHandlers } from "../socket/handlers";
-import { getUnspentTxOuts } from "../blockchain";
 
 export function createTransaction(req: Request, res: Response) {
     const { body } = req;
@@ -31,7 +31,7 @@ export function createTransaction(req: Request, res: Response) {
     // add pool
     poolInst.addTransaction(transaction, getUnspentTxOuts());
     // broadcast
-    TransactionSocketHandlers.broadcastTransactionPool();
+    TransactionSocketSender.broadcastTransactionPoolRepsonse();
 
     res.json(new CreatedResponse(transaction));
 }

@@ -1,29 +1,10 @@
-import WebSocket from "ws";
 import { Block, Blockchain } from "../../blockchain";
 import { Logger } from "../../common/utils";
 import { SocketMessage } from "../../core/types/socket";
 import { SOCKET_EVENT_NAME } from "../common/constants";
 import { SocketWriter } from "../common/utils";
+import { BlockchainSocketSender } from "../senders";
 import { getAllSocket } from "../server";
-
-export function broadcastLatestBlock(latestBlock: Block): void {
-    const message: SocketMessage<Block[]> = {
-        eventName: SOCKET_EVENT_NAME.blockchainResponse,
-        data: [latestBlock],
-    };
-
-    const wss = getAllSocket();
-    SocketWriter.broadcastMessage(wss, message);
-}
-
-export function sendWholeChainToWs(ws: WebSocket): void {
-    const message: SocketMessage<Block[]> = {
-        eventName: SOCKET_EVENT_NAME.blockchainResponse,
-        data: Blockchain.getInstance().chain,
-    };
-
-    SocketWriter.writeMessage(ws, message);
-}
 
 export function handleReceivedBlockchain(message: SocketMessage) {
     const receivedBlocks: Block[] = message.data;
@@ -63,7 +44,8 @@ export function handleReceivedBlockchain(message: SocketMessage) {
             return;
         }
 
-        broadcastLatestBlock(localChain.getLatestBlock());
+        // broadcastLatestBlock(localChain.getLatestBlock());
+        BlockchainSocketSender.broadcastLatestBlockResponse();
         return;
     }
 

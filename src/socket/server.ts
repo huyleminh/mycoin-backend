@@ -1,10 +1,11 @@
+import { v4 } from "uuid";
 import WebSocket, { WebSocket as IWebSocket } from "ws";
 import { Logger } from "../common/utils";
-import { v4 } from "uuid";
-import { SOCKET_CONFIG } from "../infrastructure/configs";
 import { SocketMessage } from "../core/types";
+import { SOCKET_CONFIG } from "../infrastructure/configs";
 import { SOCKET_EVENT_NAME } from "./common/constants";
-import { BlockchainSocketHandlers } from "./handlers";
+import { BlockchainSocketHandler, TransactionSocketHandler } from "./handlers";
+import { BlockchainSocketSender, TransactionSocketSender } from "./senders";
 
 type SocketPoolItem = {
     id: string;
@@ -38,37 +39,20 @@ function initMessageHandler(ws: WebSocket) {
             console.log("Received message: %s", message.eventName);
 
             switch (message.eventName) {
-                // case MessageType.QUERY_LATEST:
-                //     write(ws, responseLatestMsg());
-                //     break;
+                case SOCKET_EVENT_NAME.queryLatest:
+                    BlockchainSocketSender.broadcastLatestBlockResponse();
+                    break;
                 case SOCKET_EVENT_NAME.queryAll:
-                    BlockchainSocketHandlers.sendWholeChainToWs(ws);
+                    BlockchainSocketSender.sendWholeChainResponse(ws);
                     break;
                 case SOCKET_EVENT_NAME.blockchainResponse:
-                    BlockchainSocketHandlers.handleReceivedBlockchain(message);
+                    BlockchainSocketHandler.handleReceivedBlockchain(message);
                     break;
-                // case MessageType.QUERY_TRANSACTION_POOL:
-                //     write(ws, responseTransactionPoolMsg());
-                //     break;
+                case SOCKET_EVENT_NAME.queryTransactionPool:
+                    TransactionSocketSender.sendTransactionPoolResponse(ws);
+                    break;
                 case SOCKET_EVENT_NAME.transactionPoolResponse:
-                    console.log("Recevied");
-                    console.log(message.data);
-
-                    //     const receivedTransactions: Transaction[] = JSONToObject<Transaction[]>(message.data);
-                    //     if (receivedTransactions === null) {
-                    //         console.log("invalid transaction received: %s", JSON.stringify(message.data));
-                    //         break;
-                    //     }
-                    //     receivedTransactions.forEach((transaction: Transaction) => {
-                    //         try {
-                    //             handleReceivedTransaction(transaction);
-                    //             // if no error is thrown, transaction was indeed added to the pool
-                    //             // let's broadcast transaction pool
-                    //             broadCastTransactionPool();
-                    //         } catch (e) {
-                    //             console.log(e.message);
-                    //         }
-                    //     });
+                    TransactionSocketHandler.handleReceivedTransactions(message);
                     break;
             }
         } catch (e) {
@@ -85,6 +69,15 @@ function initWebSocketConnection(socketItem: SocketPoolItem) {
     ws.on("error", () => closeConnection(socketItem));
 
     initMessageHandler(ws);
+
+    BlockchainSocketSender.sendChainLengthQuery(ws);
+
+    // query transactions pool only some time after chain query
+    let timeoutId = setTimeout(() => {
+        TransactionSocketSender.broadcastTransactionPoolQuery();
+
+        clearTimeout(timeoutId);
+    }, 500);
 }
 
 export function connectToPeerAsync(peerAddress: string): Promise<void> {

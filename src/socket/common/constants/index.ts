@@ -4,4 +4,5 @@ export const SOCKET_EVENT_NAME = {
     blockchainResponse: "BLOCKCHAIN_RESPONSE",
 
     transactionPoolResponse: "TRANSACTION_POOL_RESPONSE",
+    queryTransactionPool: "QUERY_TRANSACTION_POOL",
 } as const;

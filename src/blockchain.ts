@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import _ from "lodash";
 import { BinaryConverter } from "./common/utils";
-import { BlockchainSocketHandlers } from "./socket/handlers";
+import { BlockchainSocketSender } from "./socket/senders";
 import { Transaction, getCoinbaseTransaction, processTransactions } from "./transaction/transaction";
 import { TransactionInput } from "./transaction/transaction-input";
 import { TransactionOutput, UnspentTxOutput } from "./transaction/transaction-output";
@@ -185,7 +185,7 @@ export class Blockchain {
 
         TransactionPool.getInstance().update(aUnspentTxOuts);
 
-        BlockchainSocketHandlers.broadcastLatestBlock(this.getLatestBlock());
+        BlockchainSocketSender.broadcastLatestBlockResponse();
 
         return true;
     }
@@ -241,7 +241,9 @@ export class Blockchain {
         return true;
     }
 
-    // If return null -> blockchain's transactions is invalid
+    /**
+     * @description If return null -> blockchain's transactions is invalid
+     */
     static getUnspentTxOutput(blockchain: Block[]) {
         let aUnspentTxOuts: UnspentTxOutput[] = [];
 

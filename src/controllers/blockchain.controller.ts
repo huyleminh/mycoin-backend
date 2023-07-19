@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { Blockchain, generateNextBlock } from "../blockchain";
 import { BadRequestException } from "../common/exceptions";
 import { DataResponse } from "../core/response";
-import { BlockchainSocketHandlers } from "../socket/handlers";
+import { BlockchainSocketSender } from "../socket/senders";
 
 export function getBlockChainInformation(_req: Request, res: Response) {
     const chain = Blockchain.getInstance();
@@ -20,5 +20,5 @@ export function mineBlock(_req: Request, res: Response) {
     res.json(new DataResponse(block).toJSON());
 
     // add success -> broadcast
-    BlockchainSocketHandlers.broadcastLatestBlock(block);
+    BlockchainSocketSender.broadcastLatestBlockResponse();
 }

@@ -1,2 +1,2 @@
-export * as BlockchainSocketHandlers from "./blockchain.handler";
-export * as TransactionSocketHandlers from "./transaction.handler";
+export * as BlockchainSocketHandler from "./blockchain.handler";
+export * as TransactionSocketHandler from "./transaction.handler";
