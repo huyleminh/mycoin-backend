@@ -4,6 +4,8 @@ import { SocketMessage } from "../../core/types";
 import { Transaction } from "../../blockchain/transaction/transaction";
 import { TransactionPool } from "../../blockchain/transaction/transaction-pool";
 import { TransactionSocketSender } from "../senders";
+import { TransactionInput } from "../../blockchain/transaction/transaction-input";
+import { TransactionOutput } from "../../blockchain/transaction/transaction-output";
 
 export function handleReceivedTransactions(message: SocketMessage) {
     Logger.info("--- Handle received new transactions ---");
@@ -13,19 +15,32 @@ export function handleReceivedTransactions(message: SocketMessage) {
     Logger.debug("Received: ", JSON.stringify(receivedTransactions));
 
     if (!receivedTransactions) {
-        console.log("invalid transaction received: %s", JSON.stringify(message.data));
+        Logger.error("invalid transaction received: %s", JSON.stringify(message.data));
         return;
     }
 
+    const constructedTxs = receivedTransactions.map((tx) => {
+        const txInputList = tx.txInputList.map((txInput) => {
+            return new TransactionInput(txInput.txOutputId, txInput.txOutputIndex, txInput.signature);
+        });
+
+        const txOutputList = tx.txOutputList.map((txOutput) => {
+            return new TransactionOutput(txOutput.address, txOutput.amount);
+        });
+
+        return new Transaction(txInputList, txOutputList);
+    });
+
     const poolInst = TransactionPool.getInstance();
-    receivedTransactions.forEach((transaction: Transaction) => {
+
+    constructedTxs.forEach((transaction: Transaction) => {
         try {
             poolInst.addTransaction(transaction, getUnspentTxOuts());
             // if no error is thrown, transaction was indeed added to the pool
             // let's broadcast transaction pool
             TransactionSocketSender.broadcastTransactionPoolRepsonse();
         } catch (e: any) {
-            console.log(e.message);
+            Logger.error(e.message);
         }
     });
 }

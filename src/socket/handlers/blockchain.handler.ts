@@ -10,14 +10,18 @@ import { getAllSocket } from "../server";
 export function handleReceivedBlockchain(message: SocketMessage) {
     const receivedBlocks: Block[] = message.data;
 
+    const constructedChain = receivedBlocks.map((block) => {
+        return new Block(block.index, block.previousHash, block.data, block.timestamp);
+    });
+
     Logger.info("--- Handle received new chain ---");
 
-    if (receivedBlocks.length === 0) {
+    if (constructedChain.length === 0) {
         Logger.info("Received block chain size of 0");
         return;
     }
 
-    const latestBlock: Block = receivedBlocks[receivedBlocks.length - 1];
+    const latestBlock: Block = constructedChain[constructedChain.length - 1];
 
     if (!Block.isBlockStructureValid(latestBlock)) {
         Logger.info("Block structuture not valid");
@@ -51,7 +55,7 @@ export function handleReceivedBlockchain(message: SocketMessage) {
     }
 
     // local chain includes genesis block only
-    if (receivedBlocks.length === 1) {
+    if (constructedChain.length === 1) {
         Logger.info("We have to query the chain from our peer");
 
         const wss = getAllSocket();

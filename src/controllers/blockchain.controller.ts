@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
-import { Blockchain, generateNextBlock } from "../blockchain/blockchain";
+import { Blockchain } from "../blockchain/blockchain";
 import { BadRequestException } from "../common/exceptions";
 import { DataResponse } from "../core/response";
+import { BlockchainService } from "../services";
 import { BlockchainSocketSender } from "../socket/senders";
 
 export function getBlockChainInformation(_req: Request, res: Response) {
@@ -11,7 +12,7 @@ export function getBlockChainInformation(_req: Request, res: Response) {
 }
 
 export function mineBlock(_req: Request, res: Response) {
-    const block = generateNextBlock();
+    const block = BlockchainService.generateNextBlock();
 
     if (!block) {
         throw new BadRequestException(400, "Fail to add new block to chain, please try again");

@@ -20,7 +20,7 @@ export class TransactionPool {
         }
 
         if (!this.isTransactionValid(tx)) {
-            throw Error("Trying to add invalid tx to pool");
+            throw Error("Invalid transaction for pool");
         }
 
         this.pool.push(tx);

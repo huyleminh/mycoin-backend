@@ -7,18 +7,18 @@ export class Block {
     public hash: string;
     public nonce = 0;
     public difficulty = 0;
+    public data: Transaction[];
 
-    constructor(
-        public index: number,
-        public previousHash: string,
-        public data: Transaction[],
-        public timestamp: number,
-    ) {
+    constructor(public index: number, public previousHash: string, rawData: Transaction[], public timestamp: number) {
+        this.data = rawData.map((d: Transaction) => {
+            return new Transaction(d.txInputList, d.txOutputList);
+        });
+
         this.hash = this.calculateHash();
     }
 
     calculateHash() {
-        const stringToHash = this.index + this.previousHash + this.timestamp + this.data + this.nonce;
+        const stringToHash = this.index + this.previousHash + this.timestamp + JSON.stringify(this.data) + this.nonce;
         const hash = crypto.createHash("sha256");
         hash.update(stringToHash);
 
@@ -68,7 +68,7 @@ export class Block {
             return false;
         }
 
-        if (currentBlock.index - previousBlock.index !== 1) {
+        if (currentBlock.index !== previousBlock.index + 1) {
             Logger.debug("Check new block: Invalid index");
             return false;
         }
@@ -83,7 +83,9 @@ export class Block {
             return false;
         }
 
-        if (currentBlock.calculateHash() !== currentBlock.hash) {
+        const calculatedHash = currentBlock.calculateHash();
+
+        if (calculatedHash !== currentBlock.hash) {
             Logger.debug("Check new block: Invalid hash");
             return false;
         }

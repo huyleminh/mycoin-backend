@@ -7,7 +7,7 @@ import { Logger } from "../../common/utils";
 
 const ec = new ecdsa.ec("secp256k1");
 
-const COINBASE_AMOUNT: number = 50;
+export const COINBASE_AMOUNT: number = 50 as const;
 
 export class Transaction {
     public id: string;
@@ -65,7 +65,7 @@ export function validateTransaction(transaction: Transaction, aUnspentTxOuts: Un
     }
 
     if (transaction.calculateIdHash() !== transaction.id) {
-        console.log("invalid tx id: " + transaction.id);
+        Logger.debug("invalid tx id: " + transaction.id);
         return false;
     }
 
@@ -74,7 +74,7 @@ export function validateTransaction(transaction: Transaction, aUnspentTxOuts: Un
         .reduce((a, b) => a && b, true);
 
     if (!hasValidTxIns) {
-        console.log("some of the txIns are invalid in tx: " + transaction.id);
+        Logger.debug("some of the txIns are invalid in tx: " + transaction.id);
         return false;
     }
 
@@ -87,21 +87,21 @@ export function validateTransaction(transaction: Transaction, aUnspentTxOuts: Un
     const totalTxOutValues: number = transaction.txOutputList.map((txOut) => txOut.amount).reduce((a, b) => a + b, 0);
 
     if (totalTxOutValues !== totalTxInValues) {
-        console.log("totalTxOutValues !== totalTxInValues in tx: " + transaction.id);
+        Logger.debug("totalTxOutValues !== totalTxInValues in tx: " + transaction.id);
         return false;
     }
 
     return true;
 }
 
-const validateBlockTransactions = (
+function validateBlockTransactions(
     aTransactions: Transaction[],
     aUnspentTxOuts: UnspentTxOutput[],
     blockIndex: number,
-): boolean => {
+): boolean {
     const coinbaseTx = aTransactions[0];
     if (!validateCoinbaseTx(coinbaseTx, blockIndex)) {
-        console.log("invalid coinbase transaction: " + JSON.stringify(coinbaseTx));
+        Logger.debug("invalid coinbase transaction: " + JSON.stringify(coinbaseTx));
         return false;
     }
 
@@ -118,49 +118,49 @@ const validateBlockTransactions = (
     // all but coinbase transactions
     const normalTransactions: Transaction[] = aTransactions.slice(1);
     return normalTransactions.map((tx) => validateTransaction(tx, aUnspentTxOuts)).reduce((a, b) => a && b, true);
-};
+}
 
-const hasDuplicates = (txIns: TransactionInput[]): boolean => {
+function hasDuplicates(txIns: TransactionInput[]): boolean {
     const groups = _.countBy(txIns, (txIn: TransactionInput) => txIn.txOutputId + txIn.txOutputIndex);
     return _(groups)
         .map((value, key) => {
             if (value > 1) {
-                console.log("duplicate txIn: " + key);
+                Logger.debug("duplicate txIn: " + key);
                 return true;
             } else {
                 return false;
             }
         })
         .includes(true);
-};
+}
 
-const validateCoinbaseTx = (transaction: Transaction, blockIndex: number): boolean => {
+function validateCoinbaseTx(transaction: Transaction, blockIndex: number): boolean {
     if (transaction == null) {
-        console.log("the first transaction in the block must be coinbase transaction");
+        Logger.debug("the first transaction in the block must be coinbase transaction");
         return false;
     }
     if (transaction.calculateIdHash() !== transaction.id) {
-        console.log("invalid coinbase tx id: " + transaction.id);
+        Logger.debug("invalid coinbase tx id: " + transaction.id);
         return false;
     }
     if (transaction.txInputList.length !== 1) {
-        console.log("one txIn must be specified in the coinbase transaction");
+        Logger.debug("one txIn must be specified in the coinbase transaction");
         return false;
     }
     if (transaction.txInputList[0].txOutputIndex !== blockIndex) {
-        console.log("the txIn signature in coinbase tx must be the block height");
+        Logger.debug("the txIn signature in coinbase tx must be the block height");
         return false;
     }
     if (transaction.txOutputList.length !== 1) {
-        console.log("invalid number of txOuts in coinbase transaction");
+        Logger.debug("invalid number of txOuts in coinbase transaction");
         return false;
     }
     if (transaction.txOutputList[0].amount !== COINBASE_AMOUNT) {
-        console.log("invalid coinbase amount in coinbase transaction");
+        Logger.debug("invalid coinbase amount in coinbase transaction");
         return false;
     }
     return true;
-};
+}
 
 export function validateTxIn(
     txIn: TransactionInput,
@@ -172,7 +172,7 @@ export function validateTxIn(
     );
 
     if (!referencedUTxOut) {
-        console.log("referenced txOut not found: " + JSON.stringify(txIn));
+        Logger.debug("referenced txOut not found: " + JSON.stringify(txIn));
         return false;
     }
 
@@ -181,7 +181,7 @@ export function validateTxIn(
     const key = ec.keyFromPublic(address, "hex");
     const validSignature: boolean = key.verify(transaction.id, txIn.signature);
     if (!validSignature) {
-        console.log(
+        Logger.debug(
             "invalid txIn signature: %s txId: %s address: %s",
             txIn.signature,
             transaction.id,
@@ -192,7 +192,7 @@ export function validateTxIn(
     return true;
 }
 
-const updateUnspentTxOuts = (aTransactions: Transaction[], aUnspentTxOuts: UnspentTxOutput[]): UnspentTxOutput[] => {
+function updateUnspentTxOuts(aTransactions: Transaction[], aUnspentTxOuts: UnspentTxOutput[]): UnspentTxOutput[] {
     const newUnspentTxOuts: UnspentTxOutput[] = aTransactions
         .map((t) => {
             return t.txOutputList.map((txOut, index) => new UnspentTxOutput(t.id, index, txOut.address, txOut.amount));
@@ -209,7 +209,7 @@ const updateUnspentTxOuts = (aTransactions: Transaction[], aUnspentTxOuts: Unspe
         .concat(newUnspentTxOuts);
 
     return resultingUnspentTxOuts;
-};
+}
 
 export function processTransactions(
     aTransactions: Transaction[],
@@ -217,15 +217,8 @@ export function processTransactions(
     blockIndex: number,
 ) {
     if (!validateBlockTransactions(aTransactions, aUnspentTxOuts, blockIndex)) {
-        console.log("invalid block transactions");
+        Logger.debug("Process transaction: Invalid block transactions");
         return null;
     }
     return updateUnspentTxOuts(aTransactions, aUnspentTxOuts);
-}
-
-export function getCoinbaseTransaction(address: string, blockIndex: number): Transaction {
-    const txInput = new TransactionInput("", blockIndex, "");
-    const transaction = new Transaction([txInput], [new TransactionOutput(address, COINBASE_AMOUNT)]);
-
-    return transaction;
 }

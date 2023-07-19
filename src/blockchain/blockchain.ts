@@ -1,12 +1,11 @@
 import _ from "lodash";
+import { Logger, getCurrentTimestampAsSecond } from "../common/utils";
 import { BlockchainSocketSender } from "../socket/senders";
-import { getPublicKey } from "../wallet";
 import { Block } from "./block";
-import { Transaction, getCoinbaseTransaction, processTransactions } from "./transaction/transaction";
+import { Transaction, processTransactions } from "./transaction/transaction";
 import { TransactionInput } from "./transaction/transaction-input";
 import { TransactionOutput, UnspentTxOutput } from "./transaction/transaction-output";
 import { TransactionPool } from "./transaction/transaction-pool";
-import { Logger, getCurrentTimestampAsSecond } from "../common/utils";
 
 // in seconds
 const BLOCK_GENERATION_INTERVAL: number = 10;
@@ -115,7 +114,7 @@ export class Blockchain {
                 ],
             );
 
-            const genesisBlock: Block = new Block(0, "", [genesisTransaction], getCurrentTimestampAsSecond());
+            const genesisBlock: Block = new Block(0, "", [genesisTransaction], 1689784166);
 
             Blockchain._instance = new Blockchain(genesisBlock);
         }
@@ -157,26 +156,14 @@ export class Blockchain {
 }
 
 export function generateNextRawBlock(previousBlock: Block, blockData: any): Block | null {
-    const nextIndex: number = previousBlock.index + 1;
-    const newBlock: Block = new Block(nextIndex, previousBlock.hash, blockData, getCurrentTimestampAsSecond());
+    const nextIndex = previousBlock.index + 1;
+    const timestamp = getCurrentTimestampAsSecond();
+    const newBlock: Block = new Block(nextIndex, previousBlock.hash, blockData, timestamp);
 
     newBlock.mineBlock();
     const isBlockAdded = Blockchain.getInstance().addBlock(newBlock);
 
     return isBlockAdded ? newBlock : null;
-}
-
-export function generateNextBlock() {
-    const chain = Blockchain.getInstance();
-    const poolInst = TransactionPool.getInstance();
-
-    const minerAddress = getPublicKey();
-
-    const coinbaseTx: Transaction = getCoinbaseTransaction(minerAddress, chain.getLatestBlock().index + 1);
-
-    const blockData: Transaction[] = [coinbaseTx].concat(poolInst.pool);
-
-    return generateNextRawBlock(chain.getLatestBlock(), blockData);
 }
 
 let unspentTxOuts: UnspentTxOutput[] = processTransactions(Blockchain.getInstance().chain[0].data, [], 0) || [];

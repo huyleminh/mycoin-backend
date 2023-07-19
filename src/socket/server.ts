@@ -34,9 +34,8 @@ function initMessageHandler(ws: WebSocket) {
     ws.on("message", (data: string) => {
         try {
             const message: SocketMessage = JSON.parse(data);
-            console.log({ data, message });
 
-            console.log("Received message: %s", message.eventName);
+            Logger.debug(`Received message: ${message.eventName}`);
 
             switch (message.eventName) {
                 case SOCKET_EVENT_NAME.queryLatest:
@@ -56,7 +55,8 @@ function initMessageHandler(ws: WebSocket) {
                     break;
             }
         } catch (e) {
-            console.log(e);
+            Logger.error("-------- Listening message error")
+            Logger.error(e);
         }
     });
 }
