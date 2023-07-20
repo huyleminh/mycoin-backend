@@ -1,4 +1,4 @@
-import { getUnspentTxOuts } from "../../blockchain/blockchain";
+import { getUnspentTxOutputPool } from "../../blockchain/blockchain";
 import { Logger } from "../../common/utils";
 import { SocketMessage } from "../../core/types";
 import { Transaction } from "../../blockchain/transaction/transaction";
@@ -35,7 +35,7 @@ export function handleReceivedTransactions(message: SocketMessage) {
 
     constructedTxs.forEach((transaction: Transaction) => {
         try {
-            poolInst.addTransaction(transaction, getUnspentTxOuts());
+            poolInst.addTransaction(transaction, getUnspentTxOutputPool());
             // if no error is thrown, transaction was indeed added to the pool
             // let's broadcast transaction pool
             TransactionSocketSender.broadcastTransactionPoolRepsonse();

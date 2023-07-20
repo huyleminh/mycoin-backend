@@ -25,7 +25,7 @@ export function generateTransaction(
     // FE wallet
     const myAddress: string = new WalletKeyAgent().getPublicAddress(privateKey);
 
-    // Call API to get
+    // Call API to get: /unspent-txs
     const myUnspentTxOutsA = unspentTxOuts.filter((uTxO: UnspentTxOutput) => uTxO.address === myAddress);
 
     const myUnspentTxOuts = filterTxPoolTxs(myUnspentTxOutsA, txPool);
@@ -33,12 +33,10 @@ export function generateTransaction(
     // filter from unspentOutputs such inputs that are referenced in pool
     const { includedUnspentTxOuts, leftOverAmount } = findTxOutsForAmount(amount, myUnspentTxOuts);
 
-    const toUnsignedTxIn = (unspentTxOut: UnspentTxOutput) => {
+    const unsignedTxIns: TransactionInput[] = includedUnspentTxOuts.map((unspentTxOut) => {
         const txIn = new TransactionInput(unspentTxOut.txOutputId, unspentTxOut.txOutputIndex, "");
         return txIn;
-    };
-
-    const unsignedTxIns: TransactionInput[] = includedUnspentTxOuts.map(toUnsignedTxIn);
+    });
 
     // FE create
     const tx: Transaction = new Transaction(
@@ -48,13 +46,15 @@ export function generateTransaction(
 
     // FE sign
     tx.txInputList = tx.txInputList.map((txIn) => {
-        txIn.signature = txIn.calculateSignature(privateKey, tx.id, unspentTxOuts);
+        // txIn.signature = txIn.calculateSignature(privateKey, tx.id, unspentTxOuts);
+        txIn.signature = txIn.calculateSignature(privateKey, tx.id, myUnspentTxOuts);
         return txIn;
     });
 
     return tx;
 }
 
+// DONE: move to lib
 function createTxOuts(receiverAddress: string, myAddress: string, amount: number, leftOverAmount: number) {
     const txOut1: TransactionOutput = new TransactionOutput(receiverAddress, amount);
     if (leftOverAmount === 0) {
@@ -66,7 +66,7 @@ function createTxOuts(receiverAddress: string, myAddress: string, amount: number
 }
 
 function filterTxPoolTxs(unspentTxOuts: UnspentTxOutput[], transactionPool: Transaction[]): UnspentTxOutput[] {
-    const txIns: TransactionInput[] = _(transactionPool)
+    const txIns = _(transactionPool)
         .map((tx: Transaction) => tx.txInputList)
         .flatten()
         .value();

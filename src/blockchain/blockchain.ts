@@ -31,7 +31,7 @@ export class Blockchain {
             return false;
         }
 
-        const retVal = processTransactions(block.data, getUnspentTxOuts(), block.index);
+        const retVal = processTransactions(block.data, getUnspentTxOutputPool(), block.index);
 
         if (!retVal) {
             Logger.debug("Cannot add new block: block is not valid in terms of transactions");
@@ -40,7 +40,7 @@ export class Blockchain {
 
         this.chain.push(block);
 
-        setUnspentTxOuts(retVal);
+        setUnspentTxOutputPool(retVal);
 
         TransactionPool.getInstance().update(unspentTxOuts);
         return true;
@@ -86,7 +86,7 @@ export class Blockchain {
 
         this.chain = newChain;
 
-        setUnspentTxOuts(aUnspentTxOuts);
+        setUnspentTxOutputPool(aUnspentTxOuts);
 
         TransactionPool.getInstance().update(aUnspentTxOuts);
 
@@ -168,11 +168,11 @@ export function generateNextRawBlock(previousBlock: Block, blockData: any): Bloc
 
 let unspentTxOuts: UnspentTxOutput[] = processTransactions(Blockchain.getInstance().chain[0].data, [], 0) || [];
 
-export function getUnspentTxOuts(): UnspentTxOutput[] {
+export function getUnspentTxOutputPool(): UnspentTxOutput[] {
     return _.cloneDeep(unspentTxOuts);
 }
 
-export function setUnspentTxOuts(newUnspentTxOut: UnspentTxOutput[]) {
+export function setUnspentTxOutputPool(newUnspentTxOut: UnspentTxOutput[]) {
     Logger.debug("Update unspentTxouts with: %s", JSON.stringify(newUnspentTxOut));
     unspentTxOuts = newUnspentTxOut;
 }

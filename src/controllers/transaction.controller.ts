@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Blockchain, getUnspentTxOuts } from "../blockchain/blockchain";
+import { Blockchain, getUnspentTxOutputPool } from "../blockchain/blockchain";
 import { Transaction } from "../blockchain/transaction/transaction";
 import { TransactionPool } from "../blockchain/transaction/transaction-pool";
 import { BadRequestException } from "../common/exceptions";
@@ -34,12 +34,12 @@ export function createTransaction(req: Request, res: Response) {
         address,
         actualAmount,
         privateKey,
-        getUnspentTxOuts(),
+        getUnspentTxOutputPool(),
         poolInst.pool,
     );
 
     // add pool
-    poolInst.addTransaction(transaction, getUnspentTxOuts());
+    poolInst.addTransaction(transaction, getUnspentTxOutputPool());
 
     // broadcast
     TransactionSocketSender.broadcastTransactionPoolRepsonse();
