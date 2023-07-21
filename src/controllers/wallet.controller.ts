@@ -4,6 +4,8 @@ import { DataResponse } from "../core/response";
 import { TransactionService } from "../services";
 import { findUnspentTxOutputByAddress, getBalance, getPublicKey } from "../wallet";
 import { TransactionPool } from "../blockchain/transaction";
+import path from "path";
+import { APP_CONFIG } from "../infrastructure/configs";
 
 export function getMyWalletAddress(_req: Request, res: Response) {
     const address = getPublicKey();
@@ -31,4 +33,8 @@ export function getUserUnspentTransactionOutput(req: Request, res: Response) {
     );
 
     res.json(new DataResponse([...filteredUnspenTxs]));
+}
+
+export function sendKeyStore(_req: Request, res: Response) {
+    res.sendFile(path.join(__dirname, "../../", APP_CONFIG.minerKeystoreLocation));
 }

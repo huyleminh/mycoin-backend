@@ -14,6 +14,8 @@ export const APP_CONFIG = {
     },
 
     minerKeyLocation: process.env.PRIVATE_KEY_LOCATION || "keys/private_key",
+    minerKeystoreLocation: process.env.KEYSTORE_LOCATION || "keys/keystore",
+    minerKeystorePassword: process.env.KEYSTORE_PASSWORD || "",
 } as const;
 
 export const CORS_CONFIG = {

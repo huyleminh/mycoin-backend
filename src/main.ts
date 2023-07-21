@@ -9,7 +9,7 @@ import { AccessLogStream, Logger } from "./common/utils";
 import { APP_CONFIG } from "./infrastructure/configs";
 import { AppControllers } from "./routes";
 import { bootstrapSocketServer } from "./socket";
-import { initMinerWallet } from "./wallet";
+import { initMinerKeyStore, initMinerWallet } from "./wallet";
 
 env.TZ = "Asia/Ho_Chi_Minh";
 
@@ -65,3 +65,4 @@ bootstrapSocketServer();
 
 // Init wallet
 initMinerWallet();
+initMinerKeyStore();

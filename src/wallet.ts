@@ -1,3 +1,4 @@
+import CryptoJS from "crypto-js";
 import fs from "fs";
 import _ from "lodash";
 import { UnspentTxOutput } from "./blockchain/transaction/transaction-output";
@@ -14,6 +15,22 @@ export function initMinerWallet(): void {
 
     fs.writeFileSync(APP_CONFIG.minerKeyLocation, privateKey);
     Logger.info(`Miner private key was generated and stored at ${APP_CONFIG.minerKeyLocation}`);
+}
+
+export function initMinerKeyStore(): void {
+    if (fs.existsSync(APP_CONFIG.minerKeystoreLocation)) {
+        return;
+    }
+    // keystore
+    const dataToSign = JSON.stringify({
+        privateKey: getPrivateKey(),
+        publicKey: getPublicKey(),
+        timestamp: new Date().getTime() / 1000,
+    });
+
+    const keystoreData = CryptoJS.AES.encrypt(dataToSign, APP_CONFIG.minerKeystorePassword).toString();
+    fs.writeFileSync(APP_CONFIG.minerKeystoreLocation, JSON.stringify({key: keystoreData}));
+    Logger.info(`Miner keystore file was generated and stored at ${APP_CONFIG.minerKeystoreLocation}`);
 }
 
 export function getPrivateKey(): string {

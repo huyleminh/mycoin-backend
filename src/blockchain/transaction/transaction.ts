@@ -21,8 +21,7 @@ export class Transaction {
         this.id = this.calculateIdHash();
     }
 
-    // Hash transaction id
-    calculateIdHash(): string {
+    getDataToSign(): string {
         const txInContent: string = this.txInputList
             .map((txIn: TransactionInput) => txIn.txOutputId + txIn.txOutputIndex)
             .reduce((a, b) => a + b, "");
@@ -32,7 +31,13 @@ export class Transaction {
             .reduce((a, b) => a + b, "");
 
         const stringToHash = this.owner + txInContent + txOutContent + this.timestamp;
-        const hash = CryptoJS.SHA256(stringToHash);
+
+        return stringToHash;
+    }
+
+    // Hash transaction id
+    calculateIdHash(): string {
+        const hash = CryptoJS.SHA256(this.getDataToSign());
 
         return hash.toString(CryptoJS.enc.Hex);
     }

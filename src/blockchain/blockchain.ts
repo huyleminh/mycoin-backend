@@ -113,7 +113,7 @@ export class Blockchain {
                         50,
                     ),
                 ],
-                getCurrentTimestampAsSecond(),
+                1689784166,
             );
 
             const genesisBlock: Block = new Block(0, "", [genesisTransaction], 1689784166);

@@ -1,3 +1,4 @@
+import * as ecdsa from "elliptic";
 import { Request, Response } from "express";
 import { Blockchain, getUnspentTxOutputPool } from "../blockchain/blockchain";
 import { Transaction } from "../blockchain/transaction/transaction";
@@ -7,6 +8,8 @@ import { CreatedResponse, DataResponse } from "../core/response";
 import { TransactionService } from "../services";
 import { TransactionSocketSender } from "../socket/senders";
 import { getPrivateKey } from "../wallet";
+
+const ec = new ecdsa.ec("secp256k1");
 
 export function getTransactionPool(_req: Request, res: Response) {
     res.json(new DataResponse(TransactionPool.getInstance().pool));
@@ -47,17 +50,58 @@ export function createTransaction(req: Request, res: Response) {
 export function getTransactionDetails(req: Request, res: Response) {
     const { id } = req.params;
 
-    const txList = Blockchain.getInstance().chain.reduce((prev: Transaction[], curr) => {
-        return prev.concat(curr.data);
-    }, []);
+    const poolTx = TransactionPool.getInstance().pool.find((tx) => tx.id === id);
 
-    const transaction = txList.find((tx) => tx.id === id);
+    if (poolTx) {
+        const receiver = poolTx.txOutputList.find((tx) => tx.address !== poolTx.owner);
+        res.json(
+            new DataResponse({
+                hash: poolTx.id,
+                blockId: null,
+                status: "pending",
+                createdAt: poolTx.timestamp,
+                blockCreatedAt: null,
+                from: poolTx.owner,
+                to: receiver?.address,
+                amount: receiver?.amount,
+            }),
+        );
+        return;
+    }
 
-    if (!transaction) {
+    const minedTransaction = Blockchain.getInstance()
+        .chain.map((block) => {
+            return block.data.map((tx) => {
+                return {
+                    status: "success",
+                    block: { id: block.hash, timestamp: block.timestamp },
+                    tx,
+                };
+            });
+        })
+        .reduce((prev: { status: string; block: { id: string; timestamp: number }; tx: Transaction }[], curr) => {
+            return prev.concat(curr);
+        }, [])
+        .find((tx) => tx.tx.id === id);
+
+    if (!minedTransaction) {
         throw new BadRequestException(400, "Cannot find transaction");
     }
 
-    res.json(new DataResponse({ ...transaction }));
+    const receiver = minedTransaction.tx.txOutputList.find((tx) => tx.address !== minedTransaction.tx.owner);
+
+    res.json(
+        new DataResponse({
+            hash: minedTransaction.tx.id,
+            blockId: minedTransaction.block.id,
+            status: "success",
+            createdAt: minedTransaction.tx.timestamp,
+            blockCreatedAt: minedTransaction.block.timestamp,
+            from: minedTransaction.tx.owner,
+            to: receiver?.address,
+            amount: receiver?.amount,
+        }),
+    );
 }
 
 export function createTransactionMiner(req: Request, res: Response) {
@@ -98,7 +142,7 @@ export function getTransactionList(req: Request, res: Response) {
 
     const filter = {
         owner: owner || "",
-        receiver: receiver || ""
+        receiver: receiver || "",
     };
 
     const poolTxList = TransactionPool.getInstance().pool.map((tx) => {
@@ -131,6 +175,20 @@ export function getTransactionList(req: Request, res: Response) {
     // sort latest tx
     const result = minedTransaction
         .concat(poolTxList)
+        .filter((tx) => {
+            if (filter.owner === "") return true;
+
+            // verify signature
+            const txInputToVerify = tx.tx.txInputList[0];
+            if (txInputToVerify.txOutputId === "") {
+                return false;
+            }
+
+            const keyPair = ec.keyFromPublic(filter.owner.toString(), "hex");
+
+            const isSignatureValid = ec.verify(tx.tx.id, txInputToVerify.signature, keyPair);
+            return isSignatureValid;
+        })
         .map((tx) => {
             // get to address
             const txOutputList = tx.tx.txOutputList;
@@ -146,11 +204,6 @@ export function getTransactionList(req: Request, res: Response) {
                 to: receiverTx!.address,
                 amount: receiverTx!.amount,
             };
-        })
-        .filter((tx) => {
-            if (filter.owner === "") return true;
-
-            return filter.owner === tx.from;
         })
         .sort((a, b) => b.createdAt - a.createdAt);
 
