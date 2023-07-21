@@ -1,9 +1,8 @@
 import fs from "fs";
-import { Logger, WalletKeyAgent } from "./common/utils";
-import { UnspentTxOutput } from "./blockchain/transaction/transaction-output";
 import _ from "lodash";
+import { UnspentTxOutput } from "./blockchain/transaction/transaction-output";
+import { Logger, WalletKeyAgent } from "./common/utils";
 import { APP_CONFIG } from "./infrastructure/configs";
-import { TransactionPool } from "./blockchain/transaction";
 
 export function initMinerWallet(): void {
     if (fs.existsSync(APP_CONFIG.minerKeyLocation)) {
@@ -30,7 +29,9 @@ export function getPublicKey(): string {
 }
 
 export function getBalance(address: string, unspentTxOuts: UnspentTxOutput[]): number {
-    return _(findUnspentTxOutputByAddress(address, unspentTxOuts))
+    const result = findUnspentTxOutputByAddress(address, unspentTxOuts);
+
+    return _(result)
         .map((uTxO) => uTxO.amount)
         .sum();
 }
@@ -38,23 +39,5 @@ export function getBalance(address: string, unspentTxOuts: UnspentTxOutput[]): n
 export function findUnspentTxOutputByAddress(ownerAddress: string, unspentTxOuts: UnspentTxOutput[]) {
     const unspentTxOutputList = _.filter(unspentTxOuts, (uTxO) => uTxO.address === ownerAddress);
 
-    return filterTxPoolTxs(unspentTxOutputList);
-}
-
-function filterTxPoolTxs(unspentTxOuts: UnspentTxOutput[]): UnspentTxOutput[] {
-    const txIns = _(TransactionPool.getInstance().pool)
-        .map((tx) => tx.txInputList)
-        .flatten()
-        .value();
-
-    const removable: UnspentTxOutput[] = [];
-    for (const unspentTxOut of unspentTxOuts) {
-        const txIn = _.find(txIns, (aTxIn) => {
-            return aTxIn.txOutputIndex === unspentTxOut.txOutputIndex && aTxIn.txOutputId === unspentTxOut.txOutputId;
-        });
-
-        txIn && removable.push(unspentTxOut);
-    }
-
-    return _.without(unspentTxOuts, ...removable);
+    return unspentTxOutputList;
 }

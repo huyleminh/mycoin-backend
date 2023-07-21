@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
 import { getUnspentTxOutputPool } from "../blockchain/blockchain";
 import { DataResponse } from "../core/response";
+import { TransactionService } from "../services";
 import { findUnspentTxOutputByAddress, getBalance, getPublicKey } from "../wallet";
+import { TransactionPool } from "../blockchain/transaction";
 
 export function getMyWalletAddress(_req: Request, res: Response) {
     const address = getPublicKey();
@@ -11,7 +13,9 @@ export function getMyWalletAddress(_req: Request, res: Response) {
 export function getUserbalance(req: Request, res: Response) {
     const { address } = req.params;
 
-    const balance = getBalance(address, getUnspentTxOutputPool());
+    const unspentPool = getUnspentTxOutputPool();
+
+    const balance = getBalance(address, unspentPool);
 
     res.json(new DataResponse({ balance }));
 }
@@ -21,5 +25,10 @@ export function getUserUnspentTransactionOutput(req: Request, res: Response) {
 
     const myUnspentTxOutputList = findUnspentTxOutputByAddress(address, getUnspentTxOutputPool());
 
-    res.json(new DataResponse([...myUnspentTxOutputList]));
+    const filteredUnspenTxs = TransactionService.filterTxPoolTxs(
+        myUnspentTxOutputList,
+        TransactionPool.getInstance().pool,
+    );
+
+    res.json(new DataResponse([...filteredUnspenTxs]));
 }

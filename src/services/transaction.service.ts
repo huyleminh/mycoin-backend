@@ -39,6 +39,7 @@ export function generateTransaction(
     });
 
     // FE create
+    // done move to lib
     const tx: Transaction = new Transaction(
         unsignedTxIns,
         createTxOuts(receiverAddress, myAddress, amount, leftOverAmount),
@@ -65,7 +66,7 @@ function createTxOuts(receiverAddress: string, myAddress: string, amount: number
     return [txOut1, leftOverTx];
 }
 
-function filterTxPoolTxs(unspentTxOuts: UnspentTxOutput[], transactionPool: Transaction[]): UnspentTxOutput[] {
+export function filterTxPoolTxs(unspentTxOuts: UnspentTxOutput[], transactionPool: Transaction[]): UnspentTxOutput[] {
     const txIns = _(transactionPool)
         .map((tx: Transaction) => tx.txInputList)
         .flatten()
@@ -84,6 +85,7 @@ function filterTxPoolTxs(unspentTxOuts: UnspentTxOutput[], transactionPool: Tran
     return _.without(unspentTxOuts, ...removable);
 }
 
+// done move to lib
 function findTxOutsForAmount(amount: number, myUnspentTxOuts: UnspentTxOutput[]) {
     let currentAmount = 0;
     const includedUnspentTxOuts = [];

@@ -4,6 +4,8 @@ import { BlockchainController } from "../controllers";
 
 export const router = Router();
 
+router.get("/latest", asyncRouteHandler(BlockchainController.getLatestBlock));
+
 router.get("/:blockHash", asyncRouteHandler(BlockchainController.getBlockDetail));
 
 router.get("/", asyncRouteHandler(BlockchainController.getBlockChainInformation));

@@ -14,6 +14,49 @@ export function getTransactionPool(_req: Request, res: Response) {
 
 export function createTransaction(req: Request, res: Response) {
     const { body } = req;
+    const { transaction } = body;
+
+    if (!transaction || typeof transaction !== "object") {
+        throw new BadRequestException(400, "Missing transaction");
+    }
+
+    // check transaction structure
+    const isStructureValid = Transaction.isStructureValid(transaction);
+
+    if (!isStructureValid) {
+        throw new BadRequestException(400, "Invalid transaction structure");
+    }
+
+    const tx = new Transaction(transaction.txInputList, transaction.txOutputList);
+
+    const poolInst = TransactionPool.getInstance();
+    // add pool
+    poolInst.addTransaction(tx, getUnspentTxOutputPool());
+
+    // broadcast
+    TransactionSocketSender.broadcastTransactionPoolRepsonse();
+
+    res.json(new CreatedResponse(transaction));
+}
+
+export function getTransactionDetails(req: Request, res: Response) {
+    const { id } = req.params;
+
+    const txList = Blockchain.getInstance().chain.reduce((prev: Transaction[], curr) => {
+        return prev.concat(curr.data);
+    }, []);
+
+    const transaction = txList.find((tx) => tx.id === id);
+
+    if (!transaction) {
+        throw new BadRequestException(400, "Cannot find transaction");
+    }
+
+    res.json(new DataResponse({ ...transaction }));
+}
+
+export function createTransactionMiner(req: Request, res: Response) {
+    const { body } = req;
     const { amount, address } = body;
 
     const actualAmount = parseFloat(amount);
@@ -27,9 +70,7 @@ export function createTransaction(req: Request, res: Response) {
 
     const poolInst = TransactionPool.getInstance();
 
-    // TODO: replace by client key
     const privateKey = getPrivateKey();
-
     const transaction = TransactionService.generateTransaction(
         address,
         actualAmount,
@@ -45,20 +86,4 @@ export function createTransaction(req: Request, res: Response) {
     TransactionSocketSender.broadcastTransactionPoolRepsonse();
 
     res.json(new CreatedResponse(transaction));
-}
-
-export function getTransactionDetails(req: Request, reS: Response) {
-    const { id } = req.params;
-
-    const txList = Blockchain.getInstance().chain.reduce((prev: Transaction[], curr) => {
-        return prev.concat(curr.data);
-    }, []);
-
-    const transaction = txList.find((tx) => tx.id === id);
-
-    if (!transaction) {
-        throw new BadRequestException(400, "Cannot find transaction");
-    }
-
-    reS.json(new DataResponse({ ...transaction }));
 }

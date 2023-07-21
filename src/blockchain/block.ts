@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import CryptoJS from "crypto-js";
 import { BinaryConverter, Logger, getCurrentTimestampAsSecond } from "../common/utils";
 import { Blockchain } from "./blockchain";
 import { Transaction } from "./transaction/transaction";
@@ -19,10 +19,9 @@ export class Block {
 
     calculateHash() {
         const stringToHash = this.index + this.previousHash + this.timestamp + JSON.stringify(this.data) + this.nonce;
-        const hash = crypto.createHash("sha256");
-        hash.update(stringToHash);
+        const hash = CryptoJS.SHA256(stringToHash);
 
-        return hash.digest().toString("hex");
+        return hash.toString(CryptoJS.enc.Hex);
     }
 
     mineBlock() {

@@ -1,9 +1,9 @@
-import crypto from "crypto";
+import CryptoJS from "crypto-js";
 import * as ecdsa from "elliptic";
 import _ from "lodash";
+import { Logger } from "../../common/utils";
 import { TransactionInput } from "./transaction-input";
 import { TransactionOutput, UnspentTxOutput, findUnspentTxOutput } from "./transaction-output";
-import { Logger } from "../../common/utils";
 
 const ec = new ecdsa.ec("secp256k1");
 
@@ -26,10 +26,9 @@ export class Transaction {
             .reduce((a, b) => a + b, "");
 
         const stringToHash = txInContent + txOutContent;
-        const hash = crypto.createHash("sha256");
-        hash.update(stringToHash);
+        const hash = CryptoJS.SHA256(stringToHash);
 
-        return hash.digest().toString("hex");
+        return hash.toString(CryptoJS.enc.Hex);
     }
 
     static isStructureValid(transaction: Transaction): boolean {

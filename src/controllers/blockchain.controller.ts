@@ -36,3 +36,9 @@ export function getBlockDetail(req: Request, res: Response) {
 
     res.json(new DataResponse({ ...block }));
 }
+
+export function getLatestBlock(_req: Request, res: Response) {
+    const chain = Blockchain.getInstance();
+
+    res.json(new DataResponse(chain.getLatestBlock()).toJSON());
+}
