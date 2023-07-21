@@ -11,7 +11,7 @@ export class Block {
 
     constructor(public index: number, public previousHash: string, rawData: Transaction[], public timestamp: number) {
         this.data = rawData.map((d: Transaction) => {
-            return new Transaction(d.txInputList, d.txOutputList);
+            return new Transaction(d.owner, d.txInputList, d.txOutputList, d.timestamp);
         });
 
         this.hash = this.calculateHash();

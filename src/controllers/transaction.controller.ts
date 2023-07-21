@@ -27,7 +27,12 @@ export function createTransaction(req: Request, res: Response) {
         throw new BadRequestException(400, "Invalid transaction structure");
     }
 
-    const tx = new Transaction(transaction.txInputList, transaction.txOutputList);
+    const tx = new Transaction(
+        transaction.owner,
+        transaction.txInputList,
+        transaction.txOutputList,
+        transaction.timestamp,
+    );
 
     const poolInst = TransactionPool.getInstance();
     // add pool
@@ -86,4 +91,68 @@ export function createTransactionMiner(req: Request, res: Response) {
     TransactionSocketSender.broadcastTransactionPoolRepsonse();
 
     res.json(new CreatedResponse(transaction));
+}
+
+export function getTransactionList(req: Request, res: Response) {
+    const { owner, receiver } = req.query;
+
+    const filter = {
+        owner: owner || "",
+        receiver: receiver || ""
+    };
+
+    const poolTxList = TransactionPool.getInstance().pool.map((tx) => {
+        return {
+            status: "pending",
+            tx,
+        };
+    });
+
+    const minedTransaction = Blockchain.getInstance()
+        .chain.map((block) => {
+            return block.data.map((tx) => {
+                return {
+                    status: "success",
+                    block: { id: block.hash, index: block.index, timestamp: block.timestamp },
+                    tx,
+                };
+            });
+        })
+        .reduce(
+            (
+                prev: { status: string; block?: { id: string; index: number; timestamp: number }; tx: Transaction }[],
+                curr,
+            ) => {
+                return prev.concat(curr);
+            },
+            [],
+        );
+
+    // sort latest tx
+    const result = minedTransaction
+        .concat(poolTxList)
+        .map((tx) => {
+            // get to address
+            const txOutputList = tx.tx.txOutputList;
+            const receiverTx = txOutputList.find((txOutput) => txOutput.address !== tx.tx.owner);
+
+            return {
+                hash: tx.tx.id,
+                blockId: tx.block?.id || null,
+                status: tx.status,
+                createdAt: tx.tx.timestamp,
+                blockCreatedAt: tx.block?.timestamp || null,
+                from: tx.tx.owner,
+                to: receiverTx!.address,
+                amount: receiverTx!.amount,
+            };
+        })
+        .filter((tx) => {
+            if (filter.owner === "") return true;
+
+            return filter.owner === tx.from;
+        })
+        .sort((a, b) => b.createdAt - a.createdAt);
+
+    res.json(new DataResponse({ items: result }));
 }

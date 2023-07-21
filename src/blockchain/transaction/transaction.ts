@@ -11,7 +11,13 @@ export const COINBASE_AMOUNT: number = 50 as const;
 
 export class Transaction {
     public id: string;
-    constructor(public txInputList: TransactionInput[], public txOutputList: TransactionOutput[]) {
+
+    constructor(
+        public owner: string,
+        public txInputList: TransactionInput[],
+        public txOutputList: TransactionOutput[],
+        public timestamp: number,
+    ) {
         this.id = this.calculateIdHash();
     }
 
@@ -25,7 +31,7 @@ export class Transaction {
             .map((txOut: TransactionOutput) => txOut.address + txOut.amount)
             .reduce((a, b) => a + b, "");
 
-        const stringToHash = txInContent + txOutContent;
+        const stringToHash = this.owner + txInContent + txOutContent + this.timestamp;
         const hash = CryptoJS.SHA256(stringToHash);
 
         return hash.toString(CryptoJS.enc.Hex);

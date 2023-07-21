@@ -6,11 +6,16 @@ import {
     TransactionOutput,
     UnspentTxOutput,
 } from "../blockchain/transaction";
-import { WalletKeyAgent } from "../common/utils";
+import { WalletKeyAgent, getCurrentTimestampAsSecond } from "../common/utils";
 
 export function getCoinbaseTransaction(address: string, blockIndex: number): Transaction {
     const txInput = new TransactionInput("", blockIndex, "");
-    const transaction = new Transaction([txInput], [new TransactionOutput(address, COINBASE_AMOUNT)]);
+    const transaction = new Transaction(
+        "04bfcab8722991ae774db48f934ca79cfb7dd991229153b9f732ba5334aafcd8e7266e47076996b55a14bf9913ee3145ce0cfc1372ada8ada74bd287450313534a",
+        [txInput],
+        [new TransactionOutput(address, COINBASE_AMOUNT)],
+        getCurrentTimestampAsSecond(),
+    );
 
     return transaction;
 }
@@ -22,10 +27,8 @@ export function generateTransaction(
     unspentTxOuts: UnspentTxOutput[],
     txPool: Transaction[],
 ): Transaction {
-    // FE wallet
     const myAddress: string = new WalletKeyAgent().getPublicAddress(privateKey);
 
-    // Call API to get: /unspent-txs
     const myUnspentTxOutsA = unspentTxOuts.filter((uTxO: UnspentTxOutput) => uTxO.address === myAddress);
 
     const myUnspentTxOuts = filterTxPoolTxs(myUnspentTxOutsA, txPool);
@@ -38,14 +41,13 @@ export function generateTransaction(
         return txIn;
     });
 
-    // FE create
-    // done move to lib
     const tx: Transaction = new Transaction(
+        myAddress,
         unsignedTxIns,
         createTxOuts(receiverAddress, myAddress, amount, leftOverAmount),
+        getCurrentTimestampAsSecond(),
     );
 
-    // FE sign
     tx.txInputList = tx.txInputList.map((txIn) => {
         // txIn.signature = txIn.calculateSignature(privateKey, tx.id, unspentTxOuts);
         txIn.signature = txIn.calculateSignature(privateKey, tx.id, myUnspentTxOuts);
@@ -55,7 +57,6 @@ export function generateTransaction(
     return tx;
 }
 
-// DONE: move to lib
 function createTxOuts(receiverAddress: string, myAddress: string, amount: number, leftOverAmount: number) {
     const txOut1: TransactionOutput = new TransactionOutput(receiverAddress, amount);
     if (leftOverAmount === 0) {
@@ -85,7 +86,6 @@ export function filterTxPoolTxs(unspentTxOuts: UnspentTxOutput[], transactionPoo
     return _.without(unspentTxOuts, ...removable);
 }
 
-// done move to lib
 function findTxOutsForAmount(amount: number, myUnspentTxOuts: UnspentTxOutput[]) {
     let currentAmount = 0;
     const includedUnspentTxOuts = [];

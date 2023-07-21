@@ -1,4 +1,4 @@
-import { WalletKeyAgent } from "../../common/utils";
+import { Logger, WalletKeyAgent } from "../../common/utils";
 
 export class UnspentTxOutput {
     constructor(
@@ -14,23 +14,23 @@ export class TransactionOutput {
 
     static isValidTxOutStructure(txOut: TransactionOutput): boolean {
         if (!txOut) {
-            console.log("txOut is null");
+            Logger.error("Check output structure: txOut is null");
             return false;
         }
 
         if (typeof txOut.address !== "string") {
-            console.log("invalid address type in txOut");
+            Logger.error("Check output structure: invalid address type in txOut");
             return false;
         }
 
         const walletKeyAgent = new WalletKeyAgent();
         if (!walletKeyAgent.verifyAddress(txOut.address)) {
-            console.log("invalid TxOut address");
+            Logger.error("Check output structure: invalid TxOut address");
             return false;
         }
 
         if (typeof txOut.amount !== "number") {
-            console.log("invalid amount type in txOut");
+            Logger.error("Check output structure: invalid amount type in txOut");
             return false;
         }
         return true;

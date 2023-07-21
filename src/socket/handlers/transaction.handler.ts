@@ -28,7 +28,7 @@ export function handleReceivedTransactions(message: SocketMessage) {
             return new TransactionOutput(txOutput.address, txOutput.amount);
         });
 
-        return new Transaction(txInputList, txOutputList);
+        return new Transaction(tx.owner, txInputList, txOutputList, tx.timestamp);
     });
 
     const poolInst = TransactionPool.getInstance();

@@ -105,13 +105,15 @@ export class Blockchain {
     static getInstance(): Blockchain {
         if (!Blockchain._instance) {
             const genesisTransaction = new Transaction(
+                "04bfcab8722991ae774db48f934ca79cfb7dd991229153b9f732ba5334aafcd8e7266e47076996b55a14bf9913ee3145ce0cfc1372ada8ada74bd287450313534a",
                 [new TransactionInput("", 0, "")],
                 [
                     new TransactionOutput(
-                        "04bfcab8722991ae774db48f934ca79cfb7dd991229153b9f732ba5334aafcd8e7266e47076996b55a14bf9913ee3145ce0cfc1372ada8ada74bd287450313534a",
+                        "04cbe4046fd8ce399fd740f6f428ff2e8629dbfbabe76468c90d1c1a90afe6f580ef11c3abeaabf6710d51b295e95ed3f543669b14f913b76f58ecfc6a919dfeaa",
                         50,
                     ),
                 ],
+                getCurrentTimestampAsSecond(),
             );
 
             const genesisBlock: Block = new Block(0, "", [genesisTransaction], 1689784166);

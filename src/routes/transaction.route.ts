@@ -8,6 +8,8 @@ router.get("/pool", asyncRouteHandler(TransactionController.getTransactionPool))
 
 router.get("/:id", asyncRouteHandler(TransactionController.getTransactionDetails));
 
+router.get("/", asyncRouteHandler(TransactionController.getTransactionList))
+
 router.post("/miner", asyncRouteHandler(TransactionController.createTransactionMiner));
 
 router.post("/", asyncRouteHandler(TransactionController.createTransaction));
