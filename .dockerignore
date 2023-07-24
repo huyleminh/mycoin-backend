@@ -1,0 +1,17 @@
+Dockerfile
+.dockerignore
+node_modules
+npm-debug.log
+dist
+docker-compose.yml
+
+.git
+.gitignore
+.env
+.env.*
+.prettierrc
+.prettierignore
+
+*.log
+
+keys
